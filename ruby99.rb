@@ -1,7 +1,17 @@
 ##
 # Ruby solutions to P-99: https://prof.ti.bfh.ch/hew1/informatik3/prolog/p-99/
 #
+# Just getting to know Ruby.
+# Everything is 0-indexed as it should be.
+# "Tests" are inline. I should be using rspec or something and testing more.
+#
 # (c) Dave Ray <daveray@gmail.com>
+
+################################################################################
+################################################################################
+# Lists
+################################################################################
+################################################################################
 
 ################################################################################
 # P01 (*) Find the last element of a list. 
@@ -73,6 +83,7 @@ raise "P08 fail" unless compress([1,1,1,2,3,3,4,4,1,1,5,6,6,6,7,7]) == [1,2,3,4,
 ################################################################################
 # P09 (**) Pack consecutive duplicates of list elements into sublists.
 
+# Similar to Scala's List.span method...
 class Array
   def span
     remainder = self.dup
@@ -313,22 +324,22 @@ def merge(left, right, &predicate)
   result.concat left.empty? ? right : left
 end
 
-def merge_sort_by(list, &predicate)
+def merge_sort(list, &predicate)
   if list.empty?
     []
   elsif list.length == 1
     list
   else
     left, right = split(list, list.length / 2)
-    merge(merge_sort_by(left, &predicate), 
-          merge_sort_by(right, &predicate), 
+    merge(merge_sort(left, &predicate), 
+          merge_sort(right, &predicate), 
           &predicate)
   end
 end
 
 # Part a, sort by length
 def lsort(list)
-  merge_sort_by(list) {|a,b| a.length <=> b.length}
+  merge_sort(list) {|a,b| a.length <=> b.length}
 end
 
 raise "P28.1 fail" unless lsort([%w(a b c),%w(d e),%w(f g h),%w(d e),%w(i j k l),%w(m n),%w(o)]) ==
@@ -338,9 +349,281 @@ raise "P28.1 fail" unless lsort([%w(a b c),%w(d e),%w(f g h),%w(d e),%w(i j k l)
 def lfsort(list)
   freqs = Hash.new(0) # map from length to frequency
   list.each { |v| freqs[v.length] += 1 }
-  merge_sort_by(list) { |a,b| freqs[a.length] <=> freqs[b.length] }
+  merge_sort(list) { |a,b| freqs[a.length] <=> freqs[b.length] }
 end
 
 raise "P28.2 fail" unless lfsort([%w(a b c),%w(d e),%w(f g h),%w(d e),%w(i j k l),%w(m n),%w(o)]) ==
       [%w(i j k l), %w(o), %w(a b c), %w(f g h), %w(d  e), %w(d  e), %w(m  n) ]
+
+################################################################################
+# No P29 or P30!
+
+################################################################################
+################################################################################
+# Arithmetic
+################################################################################
+################################################################################
+
+################################################################################
+# P31 (**) Determine whether a given integer number is prime.
+$prime_cache = {} # cache from n --> [ :prime | :composite ]
+def is_prime(n)
+  if (c =$prime_cache[n])
+    c == :prime
+  elsif n > 1 && (2..Math.sqrt(n)).all? { |f| n % f != 0 }
+    $prime_cache[n] = :prime
+    true
+  else
+    $prime_cache[n] = :composite
+    false
+  end
+end
+
+raise "P31 fail" unless (1..30).select { |n| is_prime(n) } == 
+            [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+
+################################################################################
+# P32 (**) Determine the greatest common divisor of two positive integer numbers.
+def gcd(a, b)
+  b == 0 ? a : gcd(b, a % b)
+end
+
+raise "P32 fail" unless [gcd(36,63), gcd(1, 1), gcd(2, 4), gcd(99, 15)] == [9, 1, 2, 3]
+
+################################################################################
+# P33 (*) Determine whether two positive integer numbers are coprime.
+def coprime(a, b)
+  gcd(a, b) == 1
+end
+raise "P33 fail" unless [coprime(35, 64), coprime(17, 9), coprime(15, 25)] == [true, true, false]
+
+################################################################################
+# P34 (**) Calculate Euler's totient function phi(m).
+def totient_phi(n)
+  n == 1 ? 1 : (1...n).select {|v| coprime(n, v) }.length
+end
+
+raise "P34.1 fail" unless (1..20).map {|n| totient_phi(n) } == 
+      [1, 1, 2, 2, 4, 
+       2, 6, 4, 6, 4,
+       10, 4, 12, 6, 8,
+       8, 16, 6, 18, 8]
+
+# phi(prime) == prime - 1
+primes = (1..100).select {|n| is_prime(n) }
+raise "P34.2 fail" unless primes.map { |p| totient_phi(p) } == primes.map { |p| p - 1 }
+
+################################################################################
+# P35 (**) Determine the prime factors of a given positive integer.
+def prime_factors_helper(f, n)
+  if f > n
+    []
+  elsif is_prime(f) && n % f == 0
+    [f] + prime_factors_helper(f, n / f)
+  else
+    prime_factors_helper(f == 2 ? f + 1 : f + 2, n)
+  end
+end
+
+def prime_factors(n)
+  n < 4 ? [n] : prime_factors_helper(2, n)
+end
+raise "P35.1 fail" unless prime_factors(315) == [3,3,5,7]
+raise "P35.2 fail" unless prime_factors(101) == [101]
+raise "P35.3 fail" unless prime_factors(1) == [1]
+raise "P35.4 fail" unless prime_factors(2) == [2]
+raise "P35.5 fail" unless prime_factors(3) == [3]
+raise "P35.6 fail" unless prime_factors(4) == [2,2]
+
+################################################################################
+# P36 (**) Determine the prime factors of a given positive integer (2).
+def prime_factors_multi(n)
+  # Use vanilla run-length encoding and swap entries to conform to example given
+  encode(prime_factors(n)).map { |a,b| [b,a] }
+end
+
+raise "P36 fail" unless prime_factors_multi(315) == [[3, 2],[5, 1],[7, 1]]
+
+################################################################################
+# P37 (**) Calculate Euler's totient function phi(m) (improved). 
+def totient_phi_improved(n)
+  if n > 1 then
+    prime_factors_multi(n).inject(1) do |product, v| 
+      p, m = v
+      product * ((p - 1) * (p ** (m - 1)))
+    end
+  else
+    1
+  end
+end
+
+raise "P37.1 fail" unless (1..20).map {|n| totient_phi_improved(n) } == 
+      [1, 1, 2, 2, 4, 
+       2, 6, 4, 6, 4,
+       10, 4, 12, 6, 8,
+       8, 16, 6, 18, 8]
+
+# phi(prime) == prime - 1
+primes = (1..100).select {|n| is_prime(n) }
+raise "P37.2 fail" unless primes.map { |p| totient_phi_improved(p) } == primes.map { |p| p - 1 }
+
+################################################################################
+# P38 (*) Compare the two methods of calculating Euler's totient function.
+# Yes. totient_phi_improved is faster than totient_phi.
+
+################################################################################
+# P39 (*) A list of prime numbers.
+class Range
+  def primes
+    self.select { |n| is_prime(n) }
+  end
+end
+
+raise "P39 fail" unless (1..30).primes == [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+
+################################################################################
+# P40 (**) Goldbach's conjecture.
+def goldbach(n)
+  a = (2..n-1).primes.find { |a| is_prime(n - a) }
+  [a, n - a]
+end
+
+raise "P40.1 fail" unless goldbach(28) == [5, 23]
+raise "P40.2 fail" unless goldbach(40) == [3, 37]
+
+################################################################################
+# P41 (**) A list of Goldbach compositions.
+def goldbach_list(range)
+  range.select { |n| n % 2 == 0 }. map { |n| goldbach(n) }
+end
+
+raise "P41.1 fail" unless goldbach_list(9..20) == 
+      [[3,7],[5,7],[3,11],[3,13],[5,13],[3,17]]
+raise "P41.2 fail" unless goldbach_list(3..2000).select {|a,b| a > 50 && b > 50} ==
+      [[73,919], [61,1321], [67,1789], [61,1867]]
+
+################################################################################
+################################################################################
+# Logic and Codes
+################################################################################
+################################################################################
+
+################################################################################
+# P46 (**) Truth tables for logical expressions.
+def my_and(a,b)
+  case [a,b]
+    when [true, true]: true
+    else false
+  end
+end
+
+raise "P46.1 fail" unless my_and(true,true) == true
+raise "P46.2 fail" unless my_and(true,false) == false
+raise "P46.3 fail" unless my_and(false,true) == false
+raise "P46.4 fail" unless my_and(false,false) == false
+
+def my_or(a,b)
+  case [a,b]
+    when [true, true]: true
+    when [true, false]: true
+    when [false, true]: true
+    else false
+  end
+end
+
+raise "P46.5 fail" unless my_or(true,true) == true
+raise "P46.6 fail" unless my_or(true,false) == true
+raise "P46.7 fail" unless my_or(false,true) == true
+raise "P46.8 fail" unless my_or(false,false) == false
+
+def my_not(a)
+  case a
+    when true : false
+    else true
+  end
+end
+
+raise "P46.9 fail" unless my_not(true) == false
+raise "P46.10 fail" unless my_not(false) == true
+
+def my_nand(a,b) my_not(my_and(a,b)) end
+def my_nor(a,b) my_not(my_or(a,b))  end
+def my_nor(a,b) my_not(my_or(a,b)) end
+def my_impl(a,b) my_or(my_not(a), b) end
+def my_equ(a,b) my_or(my_and(a,b), my_and(my_not(a), my_not(b))) end
+def my_xor(a,b) my_not(my_equ(a,b)) end
+
+def table(&predicate)
+  result = []
+  [true, false].each do |a|
+    [true, false].each do |b|
+      result << [a,b, predicate.call(a,b)]
+    end
+  end
+  result
+end
+
+raise "P46.11 fail" unless table { |a,b| my_and(a, my_or(a, my_not(b))) } ==
+  [[true,true,true],
+   [true,false,true],
+   [false,true,false],
+   [false,false,false]]
+ 
+################################################################################
+# P47 (*) Truth tables for logical expressions (2).
+
+# Omitted. Can I define infix operators in Ruby?
+
+################################################################################
+# P48 (**) Truth tables for logical expressions (3).
+
+def truth_combinations(num_vars)
+  if num_vars == 0
+    [[]]
+  else
+    subs = truth_combinations(num_vars-1)
+    subs.map { |c| [true] + c } + subs.map { |c| [false] + c }
+  end
+end
+def table_n(num_vars, &predicate)
+  truth_combinations(num_vars).map do |vars|
+    vars + [predicate.call(*vars)] 
+  end
+end
+
+raise "P48.1 fail" unless table_n(2) { |a,b| my_and(a, my_or(a, my_not(b))) } ==
+  [[true,true,true],
+   [true,false,true],
+   [false,true,false],
+   [false,false,false]]
+# A and (B or C) equ A and B or A and C
+raise "P48.2 fail" unless table_n(3) { |a,b,c| 
+  my_equ(my_and(a, my_or(b,c)), my_or(my_and(a,b), my_and(a,c))) } ==
+  [[true,  true,  true,  true], 
+   [true,  true,  false, true], 
+   [true,  false, true,  true], 
+   [true,  false, false, true], 
+   [false, true,  true,  true], 
+   [false, true,  false, true], 
+   [false, false, true,  true], 
+   [false, false, false, true]]
+
+################################################################################
+# P49 (**) Gray code.
+def gray(n)
+  if n == 1
+    ['0', '1']
+  else
+    subs = gray(n-1)
+    subs.map { |c| '0' + c } + subs.reverse.map { |c| '1' + c }
+  end
+end
+
+raise "P49.1 fail" unless gray(1) == ['0', '1']
+raise "P49.2 fail" unless gray(2) == ['00', '01', '11', '10']
+raise "P49.3 fail" unless gray(3) == 
+  ['000', '001', '011', '010', '110', '111', '101', '100']
+
+################################################################################
+# P50 (***) Huffman code.
 
