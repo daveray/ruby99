@@ -1,0 +1,8 @@
+Ruby solutions to P-99: https://prof.ti.bfh.ch/hew1/informatik3/prolog/p-99/
+
+Just getting to know Ruby.
+Everything is 0-indexed as it should be.
+"Tests" are inline. I should be using rspec or something and testing more.
+
+(c) Dave Ray <daveray@gmail.com>
+
