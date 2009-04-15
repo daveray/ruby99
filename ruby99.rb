@@ -509,65 +509,7 @@ raise "P41.2 fail" unless goldbach_list(3..2000).select {|a,b| a > 50 && b > 50}
 ################################################################################
 
 ################################################################################
-# P46 (**) Truth tables for logical expressions.
-def my_and(a,b)
-  case [a,b]
-    when [true, true]: true
-    else false
-  end
-end
-
-raise "P46.1 fail" unless my_and(true,true) == true
-raise "P46.2 fail" unless my_and(true,false) == false
-raise "P46.3 fail" unless my_and(false,true) == false
-raise "P46.4 fail" unless my_and(false,false) == false
-
-def my_or(a,b)
-  case [a,b]
-    when [true, true]: true
-    when [true, false]: true
-    when [false, true]: true
-    else false
-  end
-end
-
-raise "P46.5 fail" unless my_or(true,true) == true
-raise "P46.6 fail" unless my_or(true,false) == true
-raise "P46.7 fail" unless my_or(false,true) == true
-raise "P46.8 fail" unless my_or(false,false) == false
-
-def my_not(a)
-  case a
-    when true : false
-    else true
-  end
-end
-
-raise "P46.9 fail" unless my_not(true) == false
-raise "P46.10 fail" unless my_not(false) == true
-
-def my_nand(a,b) my_not(my_and(a,b)) end
-def my_nor(a,b) my_not(my_or(a,b))  end
-def my_nor(a,b) my_not(my_or(a,b)) end
-def my_impl(a,b) my_or(my_not(a), b) end
-def my_equ(a,b) my_or(my_and(a,b), my_and(my_not(a), my_not(b))) end
-def my_xor(a,b) my_not(my_equ(a,b)) end
-
-def table(&predicate)
-  result = []
-  [true, false].each do |a|
-    [true, false].each do |b|
-      result << [a,b, predicate.call(a,b)]
-    end
-  end
-  result
-end
-
-raise "P46.11 fail" unless table { |a,b| my_and(a, my_or(a, my_not(b))) } ==
-  [[true,true,true],
-   [true,false,true],
-   [false,true,false],
-   [false,false,false]]
+require 'ruby99-p46'
  
 ################################################################################
 # P47 (*) Truth tables for logical expressions (2).
@@ -575,55 +517,16 @@ raise "P46.11 fail" unless table { |a,b| my_and(a, my_or(a, my_not(b))) } ==
 # Omitted. Can I define infix operators in Ruby?
 
 ################################################################################
-# P48 (**) Truth tables for logical expressions (3).
-
-def truth_combinations(num_vars)
-  if num_vars == 0
-    [[]]
-  else
-    subs = truth_combinations(num_vars-1)
-    subs.map { |c| [true] + c } + subs.map { |c| [false] + c }
-  end
-end
-def table_n(num_vars, &predicate)
-  truth_combinations(num_vars).map do |vars|
-    vars + [predicate.call(*vars)] 
-  end
-end
-
-raise "P48.1 fail" unless table_n(2) { |a,b| my_and(a, my_or(a, my_not(b))) } ==
-  [[true,true,true],
-   [true,false,true],
-   [false,true,false],
-   [false,false,false]]
-# A and (B or C) equ A and B or A and C
-raise "P48.2 fail" unless table_n(3) { |a,b,c| 
-  my_equ(my_and(a, my_or(b,c)), my_or(my_and(a,b), my_and(a,c))) } ==
-  [[true,  true,  true,  true], 
-   [true,  true,  false, true], 
-   [true,  false, true,  true], 
-   [true,  false, false, true], 
-   [false, true,  true,  true], 
-   [false, true,  false, true], 
-   [false, false, true,  true], 
-   [false, false, false, true]]
+require 'ruby99-p48'
 
 ################################################################################
-# P49 (**) Gray code.
-def gray(n)
-  if n == 1
-    ['0', '1']
-  else
-    subs = gray(n-1)
-    subs.map { |c| '0' + c } + subs.reverse.map { |c| '1' + c }
-  end
-end
-
-raise "P49.1 fail" unless gray(1) == ['0', '1']
-raise "P49.2 fail" unless gray(2) == ['00', '01', '11', '10']
-raise "P49.3 fail" unless gray(3) == 
-  ['000', '001', '011', '010', '110', '111', '101', '100']
+require 'ruby99-p49'
 
 ################################################################################
-# P50 (***) Huffman code.
+require 'ruby99-p50'
 
+################################################################################
+################################################################################
+# Binary Trees
+################################################################################
+################################################################################
